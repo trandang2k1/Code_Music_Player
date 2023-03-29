@@ -257,8 +257,8 @@ const app = {
         // Tải thông tin bài hát đầu tiên vào UI khi chạy ứng dụng
         this.loadCurrentSong();
         // Hiển thị trạng thái ban đầu của button random / repeat
-        randomBtn.classList.toggle('active', _this.isRandom);
-        repeatBtn.classList.toggle('active', _this.isRepeat);
+        randomBtn.classList.toggle('active', this.isRandom);
+        repeatBtn.classList.toggle('active', this.isRepeat);
     }
 }
 app.start();

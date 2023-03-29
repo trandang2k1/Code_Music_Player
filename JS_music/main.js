@@ -1,6 +1,8 @@
 const $ = document.querySelector.bind(document);
 const $$ = document.querySelectorAll.bind(document);
 
+const PLAYER_STORAGE_KEY = 'F8_PLAYER';
+
 const playlist = $('.playlist')
 const cd = $('.cd');
 const playBtn = $('.btn-toggle-play');
@@ -19,6 +21,7 @@ const app = {
     isPlaying: false,
     isRandom: false,
     isRepeat: false,
+    config: JSON.parse(localStorage.getItem(PLAYER_STORAGE_KEY)) || {},
     songs: [
         {
             name: "Ai rồi cũng sẽ khác",
@@ -55,10 +58,14 @@ const app = {
               "https://a10.gaanacdn.com/images/albums/72/3019572/crop_480x480_3019572.jpg"
         },
     ],
+    setConfig: function(key, value) {
+        this.config[key] = value;
+        localStorage.setItem(PLAYER_STORAGE_KEY, JSON.stringify(this.config));
+    },
     render: function () {
-        let htmls = this.songs.map(function (song, index) {
+        let htmls = this.songs.map((song, index) => {
             return `
-            <div class = "song">
+            <div class = "song ${index === this.currentIndex ? 'active' : ''}" data-index = "${index}">
                 <div class="thumb" style="background-image: url('${song.image}')"></div>
                 <div class="body">
                     <h3 class="title">${song.name}</h3>
@@ -151,8 +158,10 @@ const app = {
                    _this.currentIndex++;
                }
             }
+            _this.render();
             _this.loadCurrentSong();
             audio.play();
+            _this.scrollToActiveSong();
         }
         // Xử lí Previous bài hát
         prevBtn.onclick = function () {
@@ -171,12 +180,15 @@ const app = {
                     _this.currentIndex--;
                 }
             }
+            _this.render();
             _this.loadCurrentSong();
             audio.play();
+            _this.scrollToActiveSong();
         }
         // Xử lí random cho MusicPlayer
         randomBtn.onclick = function () {
             _this.isRandom = !_this.isRandom;
+            _this.setConfig('isRandom', _this.isRandom);
             randomBtn.classList.toggle('active', _this.isRandom);
         }
         // Xử lí next Song khi audio ended
@@ -188,11 +200,42 @@ const app = {
                 nextBtn.click();
             }
         }
+        // Xử lí lặp lại Song
         repeatBtn.onclick = function () {
             _this.isRepeat = !_this.isRepeat;
+            _this.setConfig('isRepeat', _this.isRepeat);
             repeatBtn.classList.toggle('active', _this.isRepeat);
 
         }
+        // Lắng nghe hành vi click vào playlist
+        playlist.onclick = function (e) {
+            const songNode = e.target.closest('.song:not(.active)');
+            if (songNode || e.target.closest('.option')) {
+                // Xử lí khi click vào Song
+                if (songNode) {
+                    _this.currentIndex = Number(songNode.dataset.index);
+                    _this.loadCurrentSong();
+                    _this.render();
+                    audio.play();
+                }
+                // Xử lí khi click vào Song Option
+                if (e.target.closest('.option')) {
+
+                }
+            }
+        }
+    },
+    scrollToActiveSong: function () {
+        setTimeout(() => {
+            $('.song.active').scrollIntoView({
+               behavior: 'smooth',
+               block: 'center' 
+            });
+        }, 300);
+    },
+    loadConfig: function () {
+      this.isRandom = this.config.isRandom;
+      this.isRepeat = this.config.isRepeat;  
     },
     // playRandomSong: function () {
     //     let newIndex;
@@ -203,6 +246,8 @@ const app = {
     //         this.loadCurrentSong();
     // },
     start: function () {
+        // Gán cấu hình thì config vào ứng dụng
+        this.loadConfig();
         // Render playlist
         this.render();
         // Định nghĩa các thuộc tính trong object
@@ -211,6 +256,9 @@ const app = {
         this.handleEvents();
         // Tải thông tin bài hát đầu tiên vào UI khi chạy ứng dụng
         this.loadCurrentSong();
+        // Hiển thị trạng thái ban đầu của button random / repeat
+        randomBtn.classList.toggle('active', _this.isRandom);
+        repeatBtn.classList.toggle('active', _this.isRepeat);
     }
 }
 app.start();

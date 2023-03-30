@@ -220,7 +220,7 @@ const app = {
                 }
                 // Xử lí khi click vào Song Option
                 if (e.target.closest('.option')) {
-
+                    console.log('test');
                 }
             }
         }
